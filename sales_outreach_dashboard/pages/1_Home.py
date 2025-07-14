@@ -1,43 +1,31 @@
 import streamlit as st
-import pandas as pd
-import plotly.express as px
-from utils.auth import check_auth, login
+from utils.auth import login, check_auth
 from utils.helpers import load_data, calculate_metrics
 
-# Enforce login
+# --- Authentication ---
+login()
 authenticated, role = check_auth()
 if not authenticated:
-    login()
+    st.warning("🔒 Please log in to view this page.")
     st.stop()
 
+# --- Load data ---
 df = load_data("data/outreach_data.csv")
 metrics = calculate_metrics(df)
 
+# --- Title ---
 st.title("📊 Daily/Weekly Outreach Metrics")
 
+# --- Display metrics ---
 col1, col2, col3 = st.columns(3)
 col4, col5, col6 = st.columns(3)
+col7, col8 = st.columns(2)
 
-col1.metric("Total Outreach", metrics["Total Outreach"])
-col2.metric("Meetings Booked", metrics["Meetings Booked"])
-col3.metric("Opportunity Rate (%)", metrics["Opportunity Rate (%)"])
-col4.metric("Conversion Rate (%)", metrics["Conversion Rate (%)"])
-col5.metric("Follow-Ups Made", metrics["Follow-Ups Made"])
-col6.metric("New Leads Generated", metrics["New Leads Generated"])
-
-# Trend Chart with Chart Type Toggle
-st.markdown("### 📅 Outreach Trend")
-
-chart_type = st.selectbox("Select Chart Type", ["Line", "Bar", "Histogram", "Pie"])
-
-if chart_type == "Line":
-    fig = px.line(df, x="date", y="outreach_volume", title="Outreach Volume Over Time")
-elif chart_type == "Bar":
-    fig = px.bar(df, x="date", y="outreach_volume", title="Outreach Volume Over Time")
-elif chart_type == "Histogram":
-    fig = px.histogram(df, x="outreach_volume", nbins=20, title="Outreach Volume Distribution")
-elif chart_type == "Pie":
-    pie_df = df.groupby("date")["outreach_volume"].sum().reset_index()
-    fig = px.pie(pie_df, names="date", values="outreach_volume", title="Outreach Volume by Date")
-
-st.plotly_chart(fig, use_container_width=True)
+col1.metric("Total Outreach", metrics["outreach_volume"])
+col2.metric("Meetings Booked", metrics["meetings_booked"])
+col3.metric("Qualified Meetings", metrics["qualified_meetings"])
+col4.metric("Closed Deals", metrics["closed_deals"])
+col5.metric("Follow-Ups Made", metrics["follow_ups"])
+col6.metric("New Leads", metrics["new_leads"])
+col7.metric("Opportunity Rate", f"{metrics['opportunity_rate']}%")
+col8.metric("Conversion Rate", f"{metrics['conversion_rate']}%")
